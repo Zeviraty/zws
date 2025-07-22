@@ -2,6 +2,7 @@
 
 > [!CAUTION]
 > ⚠️ Security Warning
+> 
 > `zws` is a minimal, educational web server. It is not secure and not intended for production use.
 
 ## Overview
@@ -40,5 +41,5 @@ server.bind_path("/", index_handler)
 ## Notes
 
  - You can dynamically bind paths while the server is running.
- - If fileshare=True, requests like /index.html will attempt to serve that file from the working directory.
- - The response() helper builds basic HTTP responses.
+ - If `fileshare=True`, requests like `/index.html` will attempt to serve that file from the working directory.
+ - The `response()` helper builds basic HTTP responses.
