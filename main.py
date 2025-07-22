@@ -132,15 +132,3 @@ class Server():
                     body[key] = value
 
         return body
-
-
-server = Server(True)
-server.start("127.0.0.1",8080)
-
-def index(connection, data):
-    if data["method"] == "POST":
-        connection.send(response(content_type="text/plain",content=f"Hello, {data['body']['name']}"))
-    else:
-        connection.send(response(content_type="text/html",content=open("index.html",'r').read()))
-
-server.bind_path("/", index)
