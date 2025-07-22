@@ -43,3 +43,5 @@ server.bind_path("/", index_handler)
  - You can dynamically bind paths while the server is running.
  - If `fileshare=True`, requests like `/index.html` will attempt to serve that file from the working directory.
  - The `response()` helper builds basic HTTP responses.
+
+This project is part of my ecosystem project [Zeco](https://github.com/Zeviraty/Zeco)
