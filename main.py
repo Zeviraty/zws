@@ -1,6 +1,7 @@
 import socket,os
 import threading
 from typing import Callable, Literal
+import json
 
 MatchStrategy = Literal["exact", "startswith", "endswith", "contains"]
 
@@ -130,5 +131,18 @@ class Server():
                     key = i.split("=")[0]
                     value = "=".join(i.split("=")[1:])
                     body[key] = value
+            case "application/json":
+                try:
+                    body = json.loads(buffer.decode())
+                except Exception as e:
+                    print("Error parsing request json: "+e)
 
         return body
+
+def index(connection,data):
+    print(data)
+
+server = Server()
+server.start("127.0.0.1",8080)
+
+server.bind_path("/",index)
