@@ -87,6 +87,10 @@ class Server():
                             case "md": content_type = "text/markdown"
                             case "css": content_type = "text/css"
                             case "js": content_type = "text/javascript"
+                            case "gif": content_type = "image/gif"
+                            case "jpeg" | "jpg": content_type = "image/png"
+                            case "svg": content_type = "image/svg+xml"
+                            case "webp": content_type = "webp"
                         connection.send(response(content_type = content_type, content = open("."+data["path"],'r').read()))
                         found = True
                 except Exception as e:
