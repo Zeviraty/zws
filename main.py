@@ -119,7 +119,7 @@ class Server():
                         state = "body"
                         continue
                     colon_split = i.split(":")
-                    headers[lstrip(colon_split[0].lower())] = lstrip(":".join(colon_split[1:]))
+                    headers[colon_split[0].lower().lstrip()] = ":".join(colon_split[1:]).lstrip()
                 case "body":
                     if i == "":
                         break
@@ -137,7 +137,7 @@ class Server():
         if content_parameters != None:
             tmp = {}
             for i in content_parameters:
-                tmp[lstrip(i.split("=")[0])] = lstrip("=".join(i.split("=")[1:]))
+                tmp[i.split("=")[0].lstrip()] = "=".join(i.split("=")[1:]).lstrip()
             content_parameters = tmp
         
         content_type = content_type.split(";")[0]
