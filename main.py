@@ -15,7 +15,7 @@ class Route:
 
     def matches(self, input_path: str) -> bool:
         '''Check if a path matches the defined route'''
-        if input_path.endswith("/"):
+        if input_path.endswith("/") and input_path != "/":
             input_path = input_path[:-1]
         if self.matching == "exact":
             return input_path == self.path
@@ -68,6 +68,7 @@ class Server():
                 print(e)
                 connection.send(response("400 BAD REQUEST","Bad request"))
                 continue
+            
             if data["method"] == "POST" and "body" not in data.keys():
                 self.sock.settimeout(1.0)
                 try:
