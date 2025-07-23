@@ -50,6 +50,7 @@ class Server():
     def __init__(self, fileshare = False):
         self.bound_paths: list[Route] = []
         self.fileshare = fileshare
+        self.bound_files: list[str] = []
 
     def bind_path(self, path:str, function: Callable, matching: MatchStrategy = "exact"):
         self.bound_paths.append(Route(path, function, matching))
@@ -79,7 +80,7 @@ class Server():
                     found = True
                     break
 
-            if not found and self.fileshare:
+            if not found and self.fileshare or data["path"] in self.bound_files:
                 try:
                     if os.path.exists("."+data["path"]):
                         content_type = "text/plain"
@@ -198,3 +199,8 @@ class Server():
                 print("buffer:",buffer.decode())
 
         return body
+
+    def bind_file(self,file_path):
+        if not file_path.startswith("/"):
+            file_path = "/"+file_path
+        self.bound_files.append(file_path)
