@@ -15,6 +15,8 @@ class Route:
 
     def matches(self, input_path: str) -> bool:
         '''Check if a path matches the defined route'''
+        if input_path.endswith("/"):
+            input_path = input_path[:-1]
         if self.matching == "exact":
             return input_path == self.path
         elif self.matching == "startswith":
@@ -39,12 +41,6 @@ def response(status:str = "200 OK", content:str = "", content_type:str = "", nos
     else:
         end = ""
     return f"HTTP/1.1 {status}\r\n{end}".encode()
-
-def rls(x: str):
-    '''Remove left spaces'''
-    for idx, i in enumerate(x):
-        if i != " ": break
-    return x[idx:]
 
 class Server():
     def __init__(self, fileshare = False):
@@ -123,7 +119,7 @@ class Server():
                         state = "body"
                         continue
                     colon_split = i.split(":")
-                    headers[rls(colon_split[0].lower())] = rls(":".join(colon_split[1:]))
+                    headers[lstrip(colon_split[0].lower())] = lstrip(":".join(colon_split[1:]))
                 case "body":
                     if i == "":
                         break
@@ -141,7 +137,7 @@ class Server():
         if content_parameters != None:
             tmp = {}
             for i in content_parameters:
-                tmp[rls(i.split("=")[0])] = rls("=".join(i.split("=")[1:]))
+                tmp[lstrip(i.split("=")[0])] = lstrip("=".join(i.split("=")[1:]))
             content_parameters = tmp
         
         content_type = content_type.split(";")[0]
