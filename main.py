@@ -66,8 +66,11 @@ class Server():
         while True:
             connection,address = self.sock.accept()
             buffer = connection.recv(1024)
-            data = self.parse_request(buffer)
-
+            try:
+                data = self.parse_request(buffer)
+            except:
+                connection.send(response("400 BAD REQUEST","Bad request"))
+                continue
             if data["method"] == "POST" and "body" not in data.keys():
                 buffer = connection.recv(1024)
                 data["body"] = self.parse_body(buffer, data["headers"]["content-type"])
