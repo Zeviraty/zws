@@ -64,12 +64,18 @@ class Server():
             buffer = connection.recv(1024)
             try:
                 data = self.parse_request(buffer)
-            except:
+            except Exception as e:
+                print(e)
                 connection.send(response("400 BAD REQUEST","Bad request"))
                 continue
             if data["method"] == "POST" and "body" not in data.keys():
-                buffer = connection.recv(1024)
-                data["body"] = self.parse_body(buffer, data["headers"]["content-type"])
+                self.sock.settimeout(1.0)
+                try:
+                    buffer = connection.recv(1024)
+                    data["body"] = self.parse_body(buffer, data["headers"]["content-type"])
+                except socket.timeout:
+                    data["body"] = {}
+                self.sock.settimeout(None)
 
             found = False
 
@@ -123,7 +129,7 @@ class Server():
                 case "body":
                     if i == "":
                         break
-                    body += self.parse_body(("\r\n".join(buffer.decode().split("\r\n")[idx:])).encode(),headers["content-type"])
+                    body.update(self.parse_body(("\r\n".join(buffer.decode().split("\r\n")[idx:])).encode(),headers["content-type"]))
 
         data = {'method':method, 'path':path, 'version':version, 'headers':headers}
         if body != {}:
