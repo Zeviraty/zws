@@ -109,12 +109,15 @@ class Server():
     def parse_request(self,buffer: bytes):
         state = "status"
         headers = {}
-        body = None
+        body = {}
         for idx, i in enumerate(buffer.decode().split("\r\n")):
             match state:
                 case "status":
                     method, path, version = i.split(" ")
                     state = "headers"
+                    if "?" in path:
+                        body = self.parse_body(path,"inlink")
+                        path = path.split("?")[0]
                 case "headers":
                     if i == "":
                         state = "body"
@@ -124,14 +127,14 @@ class Server():
                 case "body":
                     if i == "":
                         break
-                    body = self.parse_body(("\r\n".join(buffer.decode().split("\r\n")[idx:])).encode(),headers["content-type"])
+                    body += self.parse_body(("\r\n".join(buffer.decode().split("\r\n")[idx:])).encode(),headers["content-type"])
 
         data = {'method':method, 'path':path, 'version':version, 'headers':headers}
-        if body != None:
+        if body != {}:
             data["body"] = body
         return data
 
-    def parse_body(self, buffer: bytes, content_type: str):
+    def parse_body(self, buffer: bytes | str, content_type: str):
         body = {}
 
         content_parameters = content_type.split(";")[1:] if len(content_type.split(";")) > 1 else None
@@ -145,6 +148,11 @@ class Server():
 
 
         match content_type:
+            case "inlink":
+                for i in buffer.split("?")[-1].split("&"):
+                    key = i.split("=")[0]
+                    value = "=".join(i.split("=")[1:])
+                    body[key] = value
             case "application/x-www-form-urlencoded":
                 for i in buffer.decode().split("&"):
                     key = i.split("=")[0]
