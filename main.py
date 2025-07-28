@@ -3,6 +3,30 @@ import threading
 from typing import Callable, Literal
 import json
 
+def unquote_plus_custom(s):
+    result = ""
+    i = 0
+    while i < len(s):
+        if s[i] == '%':
+            if i + 2 < len(s):
+                hex_val = s[i+1:i+3]
+                try:
+                    result += chr(int(hex_val, 16))
+                    i += 3
+                except ValueError:
+                    result += '%'
+                    i += 1
+            else:
+                result += '%'
+                i += 1
+        elif s[i] == '+':
+            result += ' '
+            i += 1
+        else:
+            result += s[i]
+            i += 1
+    return result
+
 MatchStrategy = Literal["exact", "startswith", "endswith", "contains"]
 
 class Route:
@@ -153,9 +177,10 @@ class Server():
         match content_type:
             case "inlink":
                 for i in buffer.split("?")[-1].split("&"):
-                    key = i.split("=")[0]
-                    value = "=".join(i.split("=")[1:])
-                    body[key] = value
+                    if "=" in i:
+                        key = unquote_plus_custom(i.split("=")[0])
+                        value = unquote_plus_custom("=".join(i.split("=")[1:]))
+                        body[key] = value
             case "application/x-www-form-urlencoded":
                 for i in buffer.decode().split("&"):
                     key = i.split("=")[0]
