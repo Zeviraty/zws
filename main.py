@@ -183,8 +183,8 @@ class Server():
                         body[key] = value
             case "application/x-www-form-urlencoded":
                 for i in buffer.decode().split("&"):
-                    key = i.split("=")[0]
-                    value = "=".join(i.split("=")[1:])
+                    key = unquote_plus_custom(i.split("=")[0])
+                    value = unquote_plus_custom("=".join(i.split("=")[1:]))
                     body[key] = value
             case "application/json":
                 try:
