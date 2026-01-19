@@ -1,9 +1,8 @@
 # zws (Zev Web Server)
 
 > [!CAUTION]
-> ⚠️ Security Warning
-> 
-> `zws` is a minimal, educational web server. It is not secure and not intended for production use.
+> ⚠️Security Warning
+> `zws` is a minimal, educational web server, if you find an issue with security, please report it!
 
 ## Overview
 
@@ -11,9 +10,6 @@ zws is a web server built with Python's standard library. It is part of my perso
 
  - ✅ No external dependencies
  - ✅ Easy to understand and extend
- - ⚠️ Not production-ready or secure
-
-
 
 ## Usage
 
