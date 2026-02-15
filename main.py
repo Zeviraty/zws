@@ -3,7 +3,7 @@ import threading
 from typing import Callable, Literal
 import json
 
-def unquote_plus_custom(s):
+def _unquote_plus_custom(s):
     result = ""
     i = 0
     while i < len(s):
@@ -55,7 +55,7 @@ class Route:
     def call(self,*args, **kwargs):
         return self.function(*args, **kwargs)
 
-def response(status:str = "200 OK", content:str = "", content_type:str = "", nosniff=False):
+def _response(status:str = "200 OK", content:str = "", content_type:str = "", nosniff=False):
     '''Build a response'''
     sniff = "X-Content-Type-Options: nosniff\r\n" if nosniff else ""
     if content != "" and content_type != "":
@@ -84,15 +84,16 @@ class Server():
 
     def _listenloop(self):
         while True:
-            connection,address = self.sock.accept()
+            connection,_ = self.sock.accept()
             buffer = connection.recv(1024)
             try:
                 data = self.parse_request(buffer)
             except Exception as e:
                 print(e)
-                connection.send(response("400 BAD REQUEST","Bad request"))
+                connection.send(_response("400 BAD REQUEST","Bad request"))
                 continue
             
+            if data == None: return
             if data["method"] == "POST" and "body" not in data.keys():
                 self.sock.settimeout(1.0)
                 try:
@@ -123,13 +124,13 @@ class Server():
                             case "jpeg" | "jpg": content_type = "image/png"
                             case "svg": content_type = "image/svg+xml"
                             case "webp": content_type = "webp"
-                        connection.send(response(content_type = content_type, content = open("."+data["path"],'r').read()))
+                        connection.send(_response(content_type = content_type, content = open("."+data["path"],'r').read()))
                         found = True
                 except Exception as e:
                     print(f"Error opening {data['path']}: {e}")
 
             if not found:
-                connection.send(response("404 NOT FOUND", content="404 not found"))
+                connection.send(_response("404 NOT FOUND", content="404 not found"))
 
             connection.close()
 
@@ -137,6 +138,9 @@ class Server():
         state = "status"
         headers = {}
         body = {}
+        method = ""
+        path = ""
+        version = ""
         for idx, i in enumerate(buffer.decode().split("\r\n")):
             match state:
                 case "status":
@@ -154,14 +158,17 @@ class Server():
                 case "body":
                     if i == "":
                         break
-                    body.update(self.parse_body(("\r\n".join(buffer.decode().split("\r\n")[idx:])).encode(),headers["content-type"]))
+                    if body == None: return
+                    new = self.parse_body(("\r\n".join(buffer.decode().split("\r\n")[idx:])).encode(),headers["content-type"])
+                    if new == None: return
+                    body.update(new)
 
         data = {'method':method, 'path':path, 'version':version, 'headers':headers}
         if body != {}:
             data["body"] = body
         return data
 
-    def parse_body(self, buffer: bytes | str, content_type: str):
+    def parse_body(self, buffer: str | bytes, content_type: str):
         body = {}
 
         content_parameters = content_type.split(";")[1:] if len(content_type.split(";")) > 1 else None
@@ -173,28 +180,30 @@ class Server():
         
         content_type = content_type.split(";")[0]
 
+        if isinstance(buffer, bytes): buffer = buffer.decode()
 
         match content_type:
             case "inlink":
                 for i in buffer.split("?")[-1].split("&"):
                     if "=" in i:
-                        key = unquote_plus_custom(i.split("=")[0])
-                        value = unquote_plus_custom("=".join(i.split("=")[1:]))
+                        key = _unquote_plus_custom(i.split("=")[0])
+                        value = _unquote_plus_custom("=".join(i.split("=")[1:]))
                         body[key] = value
             case "application/x-www-form-urlencoded":
-                for i in buffer.decode().split("&"):
-                    key = unquote_plus_custom(i.split("=")[0])
-                    value = unquote_plus_custom("=".join(i.split("=")[1:]))
+                for i in buffer.split("&"):
+                    key = _unquote_plus_custom(i.split("=")[0])
+                    value = _unquote_plus_custom("=".join(i.split("=")[1:]))
                     body[key] = value
             case "application/json":
                 try:
-                    body = json.loads(buffer.decode())
+                    body = json.loads(buffer)
                 except Exception as e:
-                    print("Error parsing request json: "+e)
+                    print("Error parsing request json: ",e)
             case "multipart/form-data":
+                if content_parameters is None: return
                 boundary = content_parameters["boundary"]
 
-                parts = buffer.decode().split("--" + boundary)
+                parts = buffer.split("--" + boundary)
                 form_data = {}
 
                 for part in parts:
@@ -235,7 +244,7 @@ class Server():
                     body["form"] = form_data
             case _:
                 print("Unknown content type:",content_type)
-                print("buffer:",buffer.decode())
+                print("buffer:",buffer)
 
         return body
 
